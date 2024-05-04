@@ -182,8 +182,6 @@ void inicializar_herramientas(juego_t* juego)
     }
 }
 
-
-
 /*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar el struct.*/
 
 /*Post: Asigna valores a cada dato dentro del struct familiar_t aplicado a las herramientas que se usarán dentro del juego, utilizando el índice de cada uno 
@@ -214,7 +212,6 @@ void inicializar_familiares(juego_t* juego)
     }
 }
 
-
 /*Pre: La matriz a inicializar debe estar definida previamente en la función donde se la utiliza.*/
 /*Post: Inicializará todos los valores de la matriz con un caracter vacío, evitando que esta se inicialice con basura.*/
 
@@ -225,6 +222,26 @@ void inicializar_matriz_vacia(char matriz[MAX_FILAS][MAX_COLUMNAS])
             matriz[i][j] = VACIO;
         }
     }
+}
+
+/*Pre: La matriz mapa debe ser de MAX[FILAS]xMAX[COLUMNAS]*/
+/*Post: Carga (o actualiza) la posición de los objetos en el mapa.*/
+
+void cargar_objetos_en_mapa(juego_t juego, char mapa[MAX_FILAS][MAX_COLUMNAS]){
+
+    for (int i = 0; i < CANTIDAD_BOMBAS; i++){
+        mapa[juego.bombas[i].posicion.fil][juego.bombas[i].posicion.col] = BOMBA;
+    }
+    
+    for (int i = 0; i < CANTIDAD_HERRAMIENTAS; i++){
+        mapa[juego.herramientas[i].posicion.fil][juego.herramientas[i].posicion.col] = juego.herramientas[i].tipo;
+    }
+
+    for (int i = 0; i < CANTIDAD_FAMILIARES; i++){
+        mapa[juego.familiares[i].posicion.fil][juego.familiares[i].posicion.col] = juego.familiares[i].inicial_nombre;
+    }
+
+    mapa[juego.perry.posicion.fil][juego.perry.posicion.col] = PERRY;
 }
 
 /*Pre: No debe cumplir ningún requerimiento específico para ejecutarse adecuadamente. */
@@ -349,21 +366,7 @@ void imprimir_terreno(juego_t juego)
 
     inicializar_matriz_vacia(mapa);
 
-    for (int i = 0; i < 10; i++){
-        
-        mapa[juego.bombas[i].posicion.fil][juego.bombas[i].posicion.col] = BOMBA;
-        
-        if (juego.herramientas[i].posicion.fil >= 0 && juego.herramientas[i].posicion.fil < MAX_FILAS && juego.herramientas[i].posicion.col >= 0 && juego.herramientas[i].posicion.col < MAX_COLUMNAS) {
-            mapa[juego.herramientas[i].posicion.fil][juego.herramientas[i].posicion.col] = juego.herramientas[i].tipo;
-        }
-        
-        for (int j = 0; j < CANTIDAD_FAMILIARES; j++){
-            mapa[juego.familiares[j].posicion.fil][juego.familiares[j].posicion.col] = juego.familiares[j].inicial_nombre;
-        }
-        
-        mapa[juego.perry.posicion.fil][juego.perry.posicion.col] = PERRY;
-
-    }
+    cargar_objetos_en_mapa(juego, mapa);
 
     for (int i = 0; i < MAX_FILAS; i++){
         for (int j = 0; j<MAX_COLUMNAS; j++){
