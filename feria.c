@@ -3,52 +3,36 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-/*COLORES*/
-
-#define ANSI_COLOR_CYAN "\033[96m" /*PERRY*/
-#define ANSI_COLOR_YELLOW "\033[33m" /*BOMBAS*/
-#define ANSI_COLOR_PINK "\033[35m" /*GOLOSINAS*/
-#define ANSI_COLOR_BLUE "\033[94m" /*SOMBREROS*/
-#define ANSI_COLOR_RED "\033[91m" /*PHINEAS*/
-#define ANSI_COLOR_BRIGHTGREEN "\033[92m" /*FERB*/
-#define ANSI_COLOR_LIGHT_MAGENTA "\033[93m" /*CANDACE*/
-#define ANSI_COLOR_RESET "\033[39m" /*RESET*/
-
-/*VALOR VACÍO*/
+#define COLOR_PERRY "\033[96m" 
+#define COLOR_BOMBAS "\033[33m" 
+#define COLOR_GOLOSINAS "\033[35m" 
+#define COLOR_SOMBREROS "\033[94m"
+#define COLOR_PHINEAS "\033[91m"
+#define COLOR_FERB "\033[92m"
+#define COLOR_CANDACE "\033[93m"
+#define COLOR_DEFAULT "\033[39m"
 
 const char VACIO = ' ';
-
-/*VALORES MÁXIMOS*/
 
 const int MAX_VIDAS = 3;
 const int MAX_ENERGIA = 100;
 const int MAX_FILAS = 20;
 const int MAX_COLUMNAS = 20;
 
-/*PERRY*/
-
 const char PERRY = 'P';
-
-/*BOMBAS*/
 
 const char BOMBA = 'B';
 const int CANTIDAD_BOMBAS = 10;
-
-/*HERRAMIENTAS*/
 
 const char SOMBRERO = 'S';
 const int CANTIDAD_SOMBREROS = 3;
 const char GOLOSINA = 'G';
 const int CANTIDAD_HERRAMIENTAS = 8;
 
-/*FAMILIA*/
-
 const char PHINEAS = 'H';
 const char FERB = 'F';
 const char CANDACE = 'C';
 const int CANTIDAD_FAMILIARES = 3;
-
-/*MOVIMIENTOS Y ACCIONES*/
 
 #define ARRIBA 'W'
 #define IZQUIERDA 'A'
@@ -56,169 +40,169 @@ const int CANTIDAD_FAMILIARES = 3;
 #define DERECHA 'D'
 #define CAMUFLARSE 'Q'
 
-/*Funciones propias*/
+const int JUEGO_EN_CURSO = 0;
+const int JUEGO_GANADO = 1;
+const int JUEGO_PERDIDO = -1;
 
-/*Pre: Tanto MAX_FILAS como MAX_columnas deben tener un valor positivo. No olvidar además añadir las bibliotecas <stdlib.h> y <time.h>.*/
+/*Pre: El parámetro "coordenada" debe estar dentro de los límites establecidos del juego.*/
 
-/*Post: Asigna valores válidos (entre 0 y 20) a los datos dentro del struct coordenada_t.*/
-
-coordenada_t generar_coordenada_aleatoria()
-{
-    coordenada_t coordenada;
-    coordenada.fil = rand() % MAX_FILAS;
-    coordenada.col = rand() % MAX_COLUMNAS;
-
-    return coordenada;
-}
-
-/*Pre: El parámetro "coordenada" debe estar dentro de los límites establecidos del juego, al ser esta función normalmente trabajada junto a
-la función "generar_coordenada_aleatoria" esto ocurre ya por defecto.*/
-
-/*Post: La función devolverá "true" si la coordenada pasada ya existe en alguna de las posiciones especificadas. De lo contrario devolverá false.*/
+/*Post: Retorna "true" si la coordenada pasada ya existe en alguna de las posiciones ya ocupadas. Sino, retorna false.*/
 
 bool coordenada_existe(coordenada_t coordenada, juego_t juego)
 {
-    
-    if (coordenada.fil ==juego.perry.posicion.fil && coordenada.col == juego.perry.posicion.col) {
-        return true;
+    bool coordenada_existente = false;
+    int i = 0;
+
+    if (coordenada.fil == juego.perry.posicion.fil && coordenada.col == juego.perry.posicion.col) {
+        coordenada_existente = true;
     }
 
-    for (int i = 0; i < CANTIDAD_BOMBAS; i++) {
+    while (i < juego.tope_bombas && !coordenada_existente) {
         if (coordenada.fil == juego.bombas[i].posicion.fil && coordenada.col == juego.bombas[i].posicion.col) {
-            return true;
+            coordenada_existente = true;
+        } else 
+        {
+            i++;
         }
     }
-    
-    for (int i = 0; i < CANTIDAD_HERRAMIENTAS; i++) {
+
+    i = 0;
+
+    while (i < juego.tope_herramientas && !coordenada_existente) {
         if (coordenada.fil == juego.herramientas[i].posicion.fil && coordenada.col == juego.herramientas[i].posicion.col) {
-            return true;
+            coordenada_existente = true;
         }
-    }
-    
-    for (int i = 0; i < CANTIDAD_FAMILIARES; i++) {
-        if (coordenada .fil == juego.familiares[i].posicion.fil && coordenada.col == juego.familiares[i].posicion.col) {
-            return true;
+        else
+        {
+            i++;
         }
     }
 
-    return false;
+    i = 0;
 
+    while (i < juego.tope_familiares && !coordenada_existente) {
+        if (coordenada.fil == juego.familiares[i].posicion.fil && coordenada.col == juego.familiares[i].posicion.col) {
+            coordenada_existente = true;
+        }
+        else
+        {
+        i++;
+        }
+    }
+
+    return coordenada_existente;
 }
 
-/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar el struct. */
+/*Pre: Tanto MAX_FILAS como MAX_COLUMNAS deben tener un valor positivo. No olvidar además añadir las bibliotecas <stdlib.h> y <time.h>.*/
 
-/*Post: Asigna valores a cada dato dentro del struct de tipo personaje_t aplicado a Perry. Verifica además la no-existencia de la coordenada asignada, caso contrario
-generará una nueva para evitar repeticiones hasta que esto deje de suceder.*/
+/*Post: Asigna valores válidos (entre 0 y 20) a los datos dentro del struct coordenada_t (que no se repiten).*/
 
-void inicializar_personaje(juego_t* juego)
+coordenada_t generar_coordenada_aleatoria(juego_t* juego)
 {
-    coordenada_t nueva_posicion = generar_coordenada_aleatoria();
+    coordenada_t posicion_aleatoria = {-1,-1};
 
-    while (coordenada_existe(nueva_posicion, *juego)){
-        nueva_posicion = generar_coordenada_aleatoria();
-    }
+    do
+    {
+        posicion_aleatoria.fil = rand() % MAX_FILAS;
+        posicion_aleatoria.col = rand() % MAX_COLUMNAS;
+    } 
+    while (coordenada_existe(posicion_aleatoria, *juego));
 
-    personaje_t perry = {MAX_VIDAS, MAX_ENERGIA, false, nueva_posicion};
-
-    juego->perry = perry;
-
+    return posicion_aleatoria;
 }
 
-/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar el struct.*/
+/*Pre: El puntero *perry debe ser no nulo y tener validez para así poder modificar un struct. */
 
-/*Post: Asigna valores a cada dato dentro del struct bomba_t aplicado a las bombas que se usarán dentro del juego. Verifica antes la no-existencia 
-de la coordenada asignada, caso contrario generará una nueva para evitar repeticiones hasta que esto deje de suceder y luego de esa verificación completará
-definitivamente el struct de tipo bomba_t.*/    
+/*Post: Asigna valores a cada dato dentro del struct de tipo personaje_t aplicado a Perry.*/
 
-void inicializar_bombas(juego_t* juego)
+void inicializar_personaje(personaje_t *perry)
 {
-    juego->tope_bombas = CANTIDAD_BOMBAS;
-
-    for (int i = 0; i < juego->tope_bombas; i++) {
-        
-        coordenada_t nueva_posicion = generar_coordenada_aleatoria();
-
-        while (coordenada_existe(nueva_posicion, *juego)) {
-            nueva_posicion = generar_coordenada_aleatoria(); 
-        }
-
-        juego->bombas[i].posicion = nueva_posicion;
-        juego->bombas[i].timer = rand() % 251 + 50;
-        juego->bombas[i].desactivada = false;
-    }
+    perry->vida = MAX_VIDAS;
+    perry->energia = MAX_ENERGIA;
+    perry->camuflado = false;
+    perry->posicion.fil = rand() % MAX_FILAS;
+    perry->posicion.col = rand() % MAX_COLUMNAS;
 }
 
-/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar el struct.*/
+/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar un struct.*/
 
-/*Post: Asigna valores a cada dato dentro del struct herramienta_t aplicado a las herramientas que se usarán dentro del juego, utilizando el índice de cada una 
-dentro del arreglo para asignarlas correctamente. Verifica antes la no-existencia de la coordenada asignada, caso contrario generará una nueva para evitar repeticiones
-hasta que esta deje de repetirse y luego completará definitivamente el struct de tipo herramienta_t correspondiente.*/
+/*Post: Asigna valores válidos a cada dato dentro del struct de tipo bomba_t.*/    
 
-void inicializar_herramientas(juego_t* juego)
+void inicializar_bombas(bomba_t bombas[MAX_BOMBAS], int* tope_bombas, juego_t* juego)
 {
-    juego->tope_herramientas = CANTIDAD_HERRAMIENTAS;
-    for (int i = 0; i < CANTIDAD_SOMBREROS; i++) {
+    *tope_bombas = 0;
 
-        coordenada_t nueva_posicion = generar_coordenada_aleatoria();
-
-        while (coordenada_existe(nueva_posicion, *juego)) {
-            nueva_posicion = generar_coordenada_aleatoria();
-        }
-
-        juego->herramientas[i].posicion = nueva_posicion;
-        juego->herramientas[i].tipo = SOMBRERO;
-    }
-
-    for (int i = CANTIDAD_SOMBREROS; i < juego->tope_herramientas; i++) {
-
-        coordenada_t nueva_posicion = generar_coordenada_aleatoria();
-
-        while (coordenada_existe(nueva_posicion, *juego)) {
-            nueva_posicion = generar_coordenada_aleatoria();
-        }
-
-        juego->herramientas[i].posicion = nueva_posicion;
-        juego->herramientas[i].tipo = GOLOSINA;
+    for (int i = 0; i < CANTIDAD_BOMBAS; i++) 
+    {
+        bombas[i].posicion = generar_coordenada_aleatoria(juego);
+        bombas[i].timer = rand() % 251 + 50;
+        bombas[i].desactivada = false;
+        (*tope_bombas)++;
     }
 }
 
-/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar el struct.*/
+/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar un struct.*/
 
-/*Post: Asigna valores a cada dato dentro del struct familiar_t aplicado a las herramientas que se usarán dentro del juego, utilizando el índice de cada uno 
-dentro del arreglo para asignarlos correctamente. Verifica antes la no-existencia de la coordenada asignada, caso contrario generará una nueva para evitar repeticiones
-hasta que esto deje de suceder, luego completará definitivamente el struct de tipo familiar_t correspondiente.*/
+/*Post: Asigna valores válidos a cada dato dentro del struct de tipo herramienta_t.*/
 
-void inicializar_familiares(juego_t* juego)
+void inicializar_herramientas(herramienta_t herramientas[MAX_HERRAMIENTAS], int* tope_herramientas, juego_t* juego)
 {
-    juego->tope_familiares = CANTIDAD_FAMILIARES;
+    *tope_herramientas = 0;
 
-    for (int i = 0; i < juego->tope_familiares; i++) {
-
-        if (i == 0) {
-            juego->familiares[i].inicial_nombre = PHINEAS;
-        } else if (i == 1) {
-            juego->familiares[i].inicial_nombre = FERB;
-        } else {
-            juego->familiares[i].inicial_nombre = CANDACE;
+    for (int i = 0; i < CANTIDAD_HERRAMIENTAS; i++) 
+    {
+        if (i < CANTIDAD_SOMBREROS) 
+        {
+            herramientas[i].tipo = SOMBRERO;
+        } 
+        else 
+        {
+            herramientas[i].tipo = GOLOSINA;
         }
 
-        coordenada_t nueva_posicion = generar_coordenada_aleatoria();
-
-        while (coordenada_existe(nueva_posicion, *juego)) {
-            nueva_posicion = generar_coordenada_aleatoria();
-        }
-
-        juego->familiares[i].posicion = nueva_posicion;
+        herramientas[i].posicion = generar_coordenada_aleatoria(juego);
+        (*tope_herramientas)++;
     }
 }
 
-/*Pre: La matriz a inicializar debe estar definida previamente en la función donde se la utiliza.*/
-/*Post: Inicializará todos los valores de la matriz con un caracter vacío, evitando que esta se inicialice con basura.*/
+/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar un struct.*/
+
+/*Post: Asigna valores válidos a cada dato dentro el struct de tipo familiar_t.*/
+
+void inicializar_familiares(familiar_t familiares[MAX_FAMILIARES], int* tope_familiares, juego_t* juego)
+{
+    *tope_familiares = 0;
+
+    for (int i = 0; i < CANTIDAD_FAMILIARES; i++) 
+    {
+        if (i == 0) 
+        {
+            familiares[i].inicial_nombre = PHINEAS;
+        }
+        else if (i == 1) 
+        {
+            familiares[i].inicial_nombre = FERB;
+        } 
+        else 
+        {
+            familiares[i].inicial_nombre = CANDACE;
+        }
+
+        familiares[i].posicion = generar_coordenada_aleatoria(juego);
+        (*tope_familiares)++;
+    }
+}
+
+/*Pre: La matriz a inicializar debe estar previamente definida.*/
+
+/*Post: Inicializa todos los valores de la matriz con un caracter vacío.*/
 
 void inicializar_matriz_vacia(char matriz[MAX_FILAS][MAX_COLUMNAS])
 {
-    for (int i = 0; i < MAX_FILAS; i++){
-        for (int j = 0; j < MAX_COLUMNAS; j++){
+    for (int i = 0; i < MAX_FILAS; i++)
+    {
+        for (int j = 0; j < MAX_COLUMNAS; j++)
+        {
             matriz[i][j] = VACIO;
         }
     }
@@ -227,178 +211,191 @@ void inicializar_matriz_vacia(char matriz[MAX_FILAS][MAX_COLUMNAS])
 /*Pre: La matriz mapa debe ser de MAX[FILAS]xMAX[COLUMNAS]*/
 /*Post: Carga (o actualiza) la posición de los objetos en el mapa.*/
 
-void cargar_objetos_en_mapa(juego_t juego, char mapa[MAX_FILAS][MAX_COLUMNAS]){
-
-    for (int i = 0; i < CANTIDAD_BOMBAS; i++){
+void cargar_objetos_en_mapa(juego_t juego, char mapa[MAX_FILAS][MAX_COLUMNAS])
+{
+    for (int i = 0; i < juego.tope_bombas; i++)
+    {
         mapa[juego.bombas[i].posicion.fil][juego.bombas[i].posicion.col] = BOMBA;
     }
     
-    for (int i = 0; i < CANTIDAD_HERRAMIENTAS; i++){
+    for (int i = 0; i < juego.tope_herramientas; i++)
+    {
         mapa[juego.herramientas[i].posicion.fil][juego.herramientas[i].posicion.col] = juego.herramientas[i].tipo;
     }
 
-    for (int i = 0; i < CANTIDAD_FAMILIARES; i++){
+    for (int i = 0; i < juego.tope_familiares; i++)
+    {
         mapa[juego.familiares[i].posicion.fil][juego.familiares[i].posicion.col] = juego.familiares[i].inicial_nombre;
     }
 
     mapa[juego.perry.posicion.fil][juego.perry.posicion.col] = PERRY;
 }
 
-/*Pre: No debe cumplir ningún requerimiento específico para ejecutarse adecuadamente. */
-/*Post: Imprimirá por pantalla las instrucciones del juego, informandole al usuario los controles del juego. */
-
-void imprimir_instrucciones()
-{
-    printf("¿Un ornitorrinco...? ¡Perry El Ornitorrinco!\n");
-    printf("\nPara mover a Perry, por favor utilice las teclas W (arriba), A (izquierda), S (abajo) y D (derecha).\n");
-    printf("Para camuflar a Perry, por favor utilice la tecla Q.\n");
-    printf("Para salir del juego, por favor utilice la combinación de teclas CTRL + C.\n\n");
-}
-
-/*Pre: El struct juego debe tener datos válidos y actualizados sobre el estado de Perry. */
-/*Post: Imprimirá por pantalla el estado actual del personaje en relación a sus acciones dentro del juego. */
-
-void imprimir_estado_personaje(juego_t juego)
-{
-    printf("Vidas: %i\n", juego.perry.vida);
-    printf("Energía: %i\n", juego.perry.energia);
-    printf("Camuflado: %s\n", juego.perry.camuflado ? "Sí" : "No");
-}
-
 /*Pre: El parámetro "caracter" debe haberse asignado previamente a un dato con el fin de identificarlo. El parámetro "color" debe representar un código en formato
 ANSI cuya visualización sea correcta en la terminal.*/
 
-/*Post: Imprime el caracter deseado con el color que se le asigne, sustituyendose %s por el color deseado, %c por el caracter y el segundo %s por un reset al color.*/
+/*Post: Imprime el caracter deseado con el color que se le asigne.*/
 
 void asignar_color_caracter(char caracter, const char *color)
 {
-    printf("%s%c%s", color, caracter, ANSI_COLOR_RESET);
+    printf("%s%c%s", color, caracter, COLOR_DEFAULT);
 }
 
+/*Pre: El arreglo de bombas debe estar ya inicializado y "bombas" debe ser de tipo bomba_t.*/
 
-/*Funciones de la biblioteca asignada por la cátedra*/
+/*Pos: Retorna true si encuentra alguna bomba activada en el array de bombas. Sino, retorna false.*/
 
-
-/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar el struct, inicializando los datos que correspondan.*/
-
-/*Post: Se inicializarán los objetos necesarios para el adecuado funcionamiento del juego, siendo estos Perry, los obstaculos, las herramientas y la familia Flynn.*/
-
-void inicializar_juego(juego_t* juego)
+bool hay_bombas_activadas(bomba_t bombas[MAX_BOMBAS])
 {
-    /*Perry*/
+    int i = 0;
+    bool bombas_activadas = false;
 
-    inicializar_personaje(juego);
+    while ((!bombas_activadas) && i < CANTIDAD_BOMBAS)
+    {
+        if (bombas[i].desactivada == false)
+        {
+            bombas_activadas = true;
+        }
 
-    /*Bombas*/
+        i++;
 
-    inicializar_bombas(juego);
+    }
 
-    /*HERRAMIENTAS*/
-
-    inicializar_herramientas(juego);
-
-    /*FAMILIARES*/
-
-    inicializar_familiares(juego);
-
+    return bombas_activadas;
 }
 
-/*Pre: El puntero *juego debe ser no nulo y tener validez para asi poder ver el estado actual del juego junto a las posiciones. El caracter "acción"
-puede ser cualquiera ya que se contemplan todos los casos posibles de ingreso (obligatoriamente, dado el tipo de dato, debe ser una letra).*/
+/*Pre: El parámetro "acción" debe ser una letra, sino no hará movimiento y no verificará nada. La posición de perry debe estar inicializada.*/
+/*Pos: Retorna un booleano que simboliza si el movimiento a realizar está dentro de los límites de la matriz.*/
 
-/*Post: Cambiara la coordenada actual de Perry de acuerdo a lo que ingrese el usuario. Si lo que se ingresó no es válido o el movimiento ingresado sale de los
-límites de la matriz, vuelve a pedirle al usuario que ingrese un caracter hasta que este tenga validez.
-Adicional al movimiento, se podrá cambiar el estado de camuflaje de Perry o salir del juego si el usuario así lo quiere.*/
-
-void realizar_jugada(juego_t* juego, char accion)
+bool jugada_dentro_de_limites(char accion, personaje_t perry)
 {
-
     switch (accion)
     {
         case ARRIBA:
-            if (juego->perry.posicion.fil > 0){
-                juego->perry.posicion.fil--;
-            }
-            break;
+            return perry.posicion.fil > 0;
         case ABAJO:
-            if (juego->perry.posicion.fil < MAX_FILAS-1)
-            {
-                juego->perry.posicion.fil++;
-            }
-            break;
-        case DERECHA:
-            if (juego->perry.posicion.col < MAX_COLUMNAS-1)
-            {
-                juego->perry.posicion.col++;
-            }
-            break;
+            return perry.posicion.fil < MAX_FILAS - 1;
         case IZQUIERDA:
-            if (juego->perry.posicion.col > 0)
-            {
+            return perry.posicion.col > 0;
+        case DERECHA:
+            return perry.posicion.col < MAX_COLUMNAS - 1;
+        default:
+            return false;
+    }
+}
+
+/*Pre: El elemento "vida" del objeto "perry" debe ya tener inicializado su valor. */
+
+/*Pos: Retorna true si perry aún tiene vidas (dentro de los valores válidos)*/
+
+bool perry_tiene_vida(personaje_t perry)
+{
+    return (perry.vida > 0 && perry.vida <= MAX_VIDAS);
+}
+
+/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar el struct, inicializando los datos que correspondan.*/
+
+/*Post: Se inicializan los objetos necesarios para el adecuado funcionamiento del juego, siendo estos Perry, los obstaculos, las herramientas y la familia Flynn.*/
+
+void inicializar_juego(juego_t* juego)
+{
+    juego->tope_bombas = 0;
+    juego->tope_herramientas = 0;
+    juego->tope_familiares = 0;
+
+    inicializar_personaje(&juego->perry);
+
+    inicializar_bombas(juego->bombas, &juego->tope_bombas, juego);
+
+    inicializar_herramientas(juego->herramientas, &juego->tope_herramientas, juego);
+
+    inicializar_familiares(juego->familiares, &juego->tope_familiares, juego);
+}
+
+/*Pre: El puntero *juego debe ser no nulo y tener validez para asi poder ver el estado actual del juego junto a las posiciones. El caracter "acción"
+ya debe ingresarse validado*/
+
+/*Post: Cambia la coordenada actual de Perry (a no ser que se salga del límite) o su estado de camuflaje de acuerdo a lo que ingrese el usuario.*/
+
+void realizar_jugada(juego_t* juego, char accion)
+{
+    if (jugada_dentro_de_limites(accion, juego->perry))
+    {
+        switch (accion)
+        {
+            case ARRIBA:
+                juego->perry.posicion.fil--;
+                break;
+            case ABAJO:
+                juego->perry.posicion.fil++;
+                break;
+            case IZQUIERDA:
                 juego->perry.posicion.col--;
-            }
-            break;
-        case CAMUFLARSE:
-            if (juego->perry.camuflado == false){
-                juego->perry.camuflado = true;
-            } else {
-                juego->perry.camuflado = false;
-            }
-            break;
+                break;
+            case DERECHA:
+                juego->perry.posicion.col++;
+                break;
+        }
+    }
+    else if (accion == CAMUFLARSE)
+    {
+        juego->perry.camuflado = !juego->perry.camuflado;
     }
 }
 
 /*Pre: El puntero *juego debe ser no nulo y tener validez para asi poder ver el estado actual del juego junto a las posiciones. Los valores de MAX_FILAS y 
 MAX_COLUMNAS deben ser positivos y coherentes al tamaño del mapa de juego. Debe estar declarada la biblioteca <stdlib.h> para el uso de system("clear")*/
 
-/*Post: Imprimirá por pantalla el terreno, que incluirá la representación visual de todo lo que se inicializó en la función inicializar_juego. Como
-funcionalidad adicional, cada tipo de elemento será diferenciado por un color específico. Además, se imprimirá también el estado actual del personaje, incluyendo
-sus vidas, energía y camuflaje.*/
+/*Post: Imprime por pantalla el terreno de juego.*/
 
 void imprimir_terreno(juego_t juego)
 {   
 
     char mapa[MAX_FILAS][MAX_COLUMNAS];
 
-    system("clear");
-
-    imprimir_instrucciones();
-
     inicializar_matriz_vacia(mapa);
 
     cargar_objetos_en_mapa(juego, mapa);
 
-    for (int i = 0; i < MAX_FILAS; i++){
-        for (int j = 0; j<MAX_COLUMNAS; j++){
-            if (j == 0) {
+    for (int i = 0; i < MAX_FILAS; i++)
+    {
+        for (int j = 0; j<MAX_COLUMNAS; j++)
+        {
+            if (j == 0) 
+            {
                 printf("|_");
-            } else if (j == MAX_COLUMNAS-1) {
+            } 
+            else if (j == MAX_COLUMNAS-1) 
+            {
                 printf("_|__");
-            } else {
+            } 
+            else 
+            {
                 printf("_|_");
             }
 
-            switch(mapa[i][j]){
+            switch(mapa[i][j])
+            {
                 case 'P':
-                    asignar_color_caracter(mapa[i][j], ANSI_COLOR_CYAN);
+                    asignar_color_caracter(mapa[i][j], COLOR_PERRY);
                     break;
                 case 'B':
-                    asignar_color_caracter(mapa[i][j], ANSI_COLOR_YELLOW);
+                    asignar_color_caracter(mapa[i][j], COLOR_BOMBAS);
                     break;
                 case 'S':
-                    asignar_color_caracter(mapa[i][j], ANSI_COLOR_BLUE);
+                    asignar_color_caracter(mapa[i][j], COLOR_SOMBREROS);
                     break;
                 case 'G':
-                    asignar_color_caracter(mapa[i][j], ANSI_COLOR_PINK);
+                    asignar_color_caracter(mapa[i][j], COLOR_GOLOSINAS);
                     break;
                 case 'H':
-                    asignar_color_caracter(mapa[i][j], ANSI_COLOR_RED);
+                    asignar_color_caracter(mapa[i][j], COLOR_PHINEAS);
                     break;
                 case 'F':
-                    asignar_color_caracter(mapa[i][j], ANSI_COLOR_BRIGHTGREEN);
+                    asignar_color_caracter(mapa[i][j], COLOR_FERB);
                     break;
                 case 'C':
-                    asignar_color_caracter(mapa[i][j], ANSI_COLOR_LIGHT_MAGENTA);
+                    asignar_color_caracter(mapa[i][j], COLOR_CANDACE);
                     break;
                 default:
                     printf("%c", mapa[i][j]);
@@ -409,37 +406,27 @@ void imprimir_terreno(juego_t juego)
         printf("\n");
     }
 
-    imprimir_estado_personaje(juego);
-
 }
 
 /*Pre: El puntero *juego debe ser no nulo y tener validez para asi poder ver el estado actual del juego a partir del valor de diversos datos dentro de los struct.*/
 
-/*Post: Evaluará el estado actual del juego en base a la vida del personaje y las bombas desactivadas, devolviendo un entero que represente si el jugador
-ha perdido, ganado, o puede seguir jugando. Si el jugador ha finalizado el juego, ya sea de forma exitosa o sin éxito, se imprimirá por pantalla un mensaje
-de acuerdo a como ha finalizado.*/
+/*Post: Devuelve un entero que representa el estado actual del juego.*/
 
 int estado_juego(juego_t juego)
 {
     int estado = 0;
-    bool bombas_desactivadas = true;
 
-    for (int i = 0; i < CANTIDAD_BOMBAS; i++){
-        if (juego.bombas[i].desactivada == false){
-
-            bombas_desactivadas = false;
-        }
-    }
-
-    int perry_vida = juego.perry.vida;
-
-
-    if (bombas_desactivadas == true && perry_vida>0){
-        estado = 1;
-    } else if (perry_vida == 0){
-        estado = -1;
-    } else {
-        estado = 0;
+    if (perry_tiene_vida(juego.perry) && !hay_bombas_activadas(juego.bombas))
+    {
+        estado = JUEGO_GANADO;
+    } 
+    else if (!perry_tiene_vida(juego.perry))
+    {
+        estado = JUEGO_PERDIDO;
+    } 
+    else 
+    {
+        estado = JUEGO_EN_CURSO;
     }
 
     return estado;
