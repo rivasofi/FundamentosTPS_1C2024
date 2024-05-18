@@ -53,12 +53,15 @@ bool coordenada_existe(coordenada_t coordenada, juego_t juego)
     bool coordenada_existente = false;
     int i = 0;
 
-    if (coordenada.fil == juego.perry.posicion.fil && coordenada.col == juego.perry.posicion.col) {
+    if (coordenada.fil == juego.perry.posicion.fil && coordenada.col == juego.perry.posicion.col)
+    {
         coordenada_existente = true;
     }
 
-    while (i < juego.tope_bombas && !coordenada_existente) {
-        if (coordenada.fil == juego.bombas[i].posicion.fil && coordenada.col == juego.bombas[i].posicion.col) {
+    while (i < juego.tope_bombas && !coordenada_existente)
+    {
+        if (coordenada.fil == juego.bombas[i].posicion.fil && coordenada.col == juego.bombas[i].posicion.col)
+        {
             coordenada_existente = true;
         } else 
         {
@@ -68,8 +71,10 @@ bool coordenada_existe(coordenada_t coordenada, juego_t juego)
 
     i = 0;
 
-    while (i < juego.tope_herramientas && !coordenada_existente) {
-        if (coordenada.fil == juego.herramientas[i].posicion.fil && coordenada.col == juego.herramientas[i].posicion.col) {
+    while (i < juego.tope_herramientas && !coordenada_existente)
+    {
+        if (coordenada.fil == juego.herramientas[i].posicion.fil && coordenada.col == juego.herramientas[i].posicion.col)
+        {
             coordenada_existente = true;
         }
         else
@@ -80,8 +85,10 @@ bool coordenada_existe(coordenada_t coordenada, juego_t juego)
 
     i = 0;
 
-    while (i < juego.tope_familiares && !coordenada_existente) {
-        if (coordenada.fil == juego.familiares[i].posicion.fil && coordenada.col == juego.familiares[i].posicion.col) {
+    while (i < juego.tope_familiares && !coordenada_existente)
+    {
+        if (coordenada.fil == juego.familiares[i].posicion.fil && coordenada.col == juego.familiares[i].posicion.col)
+        {
             coordenada_existente = true;
         }
         else
@@ -97,7 +104,7 @@ bool coordenada_existe(coordenada_t coordenada, juego_t juego)
 
 /*Post: Asigna valores válidos (entre 0 y 20) a los datos dentro del struct coordenada_t (que no se repiten).*/
 
-coordenada_t generar_coordenada_aleatoria(juego_t* juego)
+coordenada_t generar_coordenada_aleatoria_unica(juego_t* juego)
 {
     coordenada_t posicion_aleatoria = {-1,-1};
 
@@ -128,16 +135,44 @@ void inicializar_personaje(personaje_t *perry)
 
 /*Post: Asigna valores válidos a cada dato dentro del struct de tipo bomba_t.*/    
 
-void inicializar_bombas(bomba_t bombas[MAX_BOMBAS], int* tope_bombas, juego_t* juego)
+void inicializar_bombas(juego_t* juego)
 {
-    *tope_bombas = 0;
+    juego->tope_bombas = 0;
 
     for (int i = 0; i < CANTIDAD_BOMBAS; i++) 
     {
-        bombas[i].posicion = generar_coordenada_aleatoria(juego);
-        bombas[i].timer = rand() % 251 + 50;
-        bombas[i].desactivada = false;
-        (*tope_bombas)++;
+        juego->bombas[i].posicion = generar_coordenada_aleatoria_unica(juego);
+        juego->bombas[i].timer = rand() % 251 + 50;
+        juego->bombas[i].desactivada = false;
+        (juego->tope_bombas)++;
+    }
+}
+
+/*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar un struct.*/
+/*Pos: Asigna valores válidos, dentro del struct herramientas, a la cantidad de sombreros indicada.*/
+
+void inicializar_sombreros(juego_t* juego)
+{
+
+    for (int i = 0; i < CANTIDAD_SOMBREROS; i++) 
+    {
+        juego->herramientas[i].tipo = SOMBRERO;
+        juego->herramientas[i].posicion = generar_coordenada_aleatoria_unica(juego);
+        (juego->tope_herramientas)++;
+    }
+}
+
+/*Pre:El puntero *juego debe ser no nulo y tener validez para así poder modificar un struct.*/
+/*Pos: Asigna valores válidos, dentro del struct herramientas, a la cantidad de golosinas indicada.*/
+
+void inicializar_golosinas(juego_t* juego)
+{
+
+    for (int i = CANTIDAD_SOMBREROS; i < CANTIDAD_HERRAMIENTAS; i++) 
+    {
+        juego->herramientas[i].tipo = GOLOSINA;
+        juego->herramientas[i].posicion = generar_coordenada_aleatoria_unica(juego);
+        (juego->tope_herramientas)++;
     }
 }
 
@@ -145,51 +180,39 @@ void inicializar_bombas(bomba_t bombas[MAX_BOMBAS], int* tope_bombas, juego_t* j
 
 /*Post: Asigna valores válidos a cada dato dentro del struct de tipo herramienta_t.*/
 
-void inicializar_herramientas(herramienta_t herramientas[MAX_HERRAMIENTAS], int* tope_herramientas, juego_t* juego)
+void inicializar_herramientas(juego_t* juego)
 {
-    *tope_herramientas = 0;
+    juego->tope_herramientas = 0;
 
-    for (int i = 0; i < CANTIDAD_HERRAMIENTAS; i++) 
-    {
-        if (i < CANTIDAD_SOMBREROS) 
-        {
-            herramientas[i].tipo = SOMBRERO;
-        } 
-        else 
-        {
-            herramientas[i].tipo = GOLOSINA;
-        }
-
-        herramientas[i].posicion = generar_coordenada_aleatoria(juego);
-        (*tope_herramientas)++;
-    }
+    inicializar_sombreros(juego);
+    inicializar_golosinas(juego);
 }
 
 /*Pre: El puntero *juego debe ser no nulo y tener validez para así poder modificar un struct.*/
 
 /*Post: Asigna valores válidos a cada dato dentro el struct de tipo familiar_t.*/
 
-void inicializar_familiares(familiar_t familiares[MAX_FAMILIARES], int* tope_familiares, juego_t* juego)
+void inicializar_familiares(juego_t* juego)
 {
-    *tope_familiares = 0;
+    juego->tope_familiares = 0;
 
     for (int i = 0; i < CANTIDAD_FAMILIARES; i++) 
     {
         if (i == 0) 
         {
-            familiares[i].inicial_nombre = PHINEAS;
+            juego->familiares[i].inicial_nombre = PHINEAS;
         }
         else if (i == 1) 
         {
-            familiares[i].inicial_nombre = FERB;
+            juego->familiares[i].inicial_nombre = FERB;
         } 
         else 
         {
-            familiares[i].inicial_nombre = CANDACE;
+            juego->familiares[i].inicial_nombre = CANDACE;
         }
 
-        familiares[i].posicion = generar_coordenada_aleatoria(juego);
-        (*tope_familiares)++;
+        juego->familiares[i].posicion = generar_coordenada_aleatoria_unica(juego);
+        (juego->tope_familiares)++;
     }
 }
 
@@ -305,11 +328,11 @@ void inicializar_juego(juego_t* juego)
 
     inicializar_personaje(&juego->perry);
 
-    inicializar_bombas(juego->bombas, &juego->tope_bombas, juego);
+    inicializar_bombas(juego);
 
-    inicializar_herramientas(juego->herramientas, &juego->tope_herramientas, juego);
+    inicializar_herramientas(juego);
 
-    inicializar_familiares(juego->familiares, &juego->tope_familiares, juego);
+    inicializar_familiares(juego);
 }
 
 /*Pre: El puntero *juego debe ser no nulo y tener validez para asi poder ver el estado actual del juego junto a las posiciones. El caracter "acción"
