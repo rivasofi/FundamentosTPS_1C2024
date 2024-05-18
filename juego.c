@@ -25,36 +25,29 @@
 
 void imprimir_vidas(personaje_t perry)
 {
-    switch(perry.vida)
+    printf("\nVidas: ");
+    for (int i = 0; i < perry.vida; i++)
     {
-        case 3:
-            printf("\nVidas: ♥️  ♥️  ♥️\n\n");
-            break;
-        case 2:
-            printf("\nVidas: ♥️  ♥️\n\n");
-            break;
-        case 1:
-            printf("\nVidas: ♥️\n\n");
-            break;
+        printf("❤️  ");
     }
 }
 
 /*Pre: El objeto "perry" debe tener sus valores inicializados y/o actualizados (al menos el de energía).*/
-/*Pos: Imprime por pantalla una cantidad de rayos que simboliza la energía restante de perry.*/
+/*Pos: Imprime por pantalla una cantidad de rayos que simboliza la energía restante de perry junto al número real.*/
 
 void imprimir_energia(personaje_t perry)
 {
     if (perry.energia <= MAX_ENERGIA)
     {
-        printf("Energia: ⚡  ⚡  ⚡\n\n");
+        printf("\n\nEnergia: ⚡  ⚡  ⚡  [%i]\n\n", perry.energia);
     }
     else if (perry.energia <= (MAX_ENERGIA / 3) * 2)
     {
-        printf("Energia: ⚡  ⚡\n\n");
+        printf("\n\nEnergia: ⚡  ⚡  [%i]\n\n", perry.energia);
     }
     else if (perry.energia <= (MAX_ENERGIA / 3))
     {
-        printf("Energia: ⚡\n\n");
+        printf("\n\nEnergia: ⚡  [%i]\n\n", perry.energia);
     }
 }
 
@@ -156,12 +149,14 @@ int main()
 
     inicializar_juego(&juego);
 
-    do {
+    do 
+    {
         ejecutar_ciclo_juego_pantalla(juego);
         recibir_accion(&accion);
         validar_jugada(&accion, juego.perry);
         realizar_jugada(&juego, accion);
-    } while (estado_juego(juego) == JUEGO_EN_CURSO);
+    }
+    while (estado_juego(juego) == JUEGO_EN_CURSO);
 
     return 0;
 }
